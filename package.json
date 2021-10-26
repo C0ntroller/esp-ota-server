@@ -14,6 +14,7 @@
     "ota"
   ],
   "author": "C0ntroller",
+  "repository": "github:C0ntroller/esp-ota-server",
   "license": "MIT",
   "dependencies": {
     "express": "^4.17.1",
