@@ -1,0 +1,23 @@
+{
+  "name": "esp-ota-server",
+  "version": "1.0.0",
+  "description": "HTTP Server to store ESP binaries and serve them for OTA updates",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "esp8266",
+    "server",
+    "http",
+    "ota"
+  ],
+  "author": "C0ntroller",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.17.1",
+    "express-formidable": "^1.2.0",
+    "md5-file": "^5.0.0"
+  }
+}

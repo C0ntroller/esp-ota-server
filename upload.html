@@ -1,0 +1,107 @@
+<html>
+<head>
+    <script src="//cdn.rawgit.com/satazor/SparkMD5/master/spark-md5.min.js"></script>
+</head>
+<body>
+<input type="file" id="upload" />
+<div id="dragdrop" style="height:50px; width: 50%; border: 2px dashed red">Drag&Drop here</div>
+<div id="progress" style="width:50%">
+    <div id="progressbar" style="width:0; background: green">&nbsp;</div>
+</div>
+<div id="errortext" style="color:red"></div>
+<input type="text" id="namefield" readonly/>
+<input type="text" id="md5field" readonly/>
+<input type="button" id="submitbutton" value="Upload" disabled/>
+<script>
+    const progbar = document.getElementById("progressbar");
+    const dragdrop = document.getElementById("dragdrop");
+    const upload = document.getElementById("upload");
+    const errortext = document.getElementById("errortext");
+    const namefield = document.getElementById("namefield");
+    const md5field = document.getElementById("md5field");
+    const submit = document.getElementById("submitbutton");
+
+    dragdrop.addEventListener('dragover', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+    });
+
+    dragdrop.addEventListener('drop', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        processBlob(e.dataTransfer.files[0]);
+    });
+
+    upload.addEventListener("change", (e) => {
+        processBlob(e.target.files[0]);
+    });
+
+    submit.addEventListener("click", sendBinary);
+
+    function processBlob(file) {
+        const reader = new FileReader();
+
+        progbar.style.background = "green";
+        errortext.innerHTML = ""
+
+        if(!file) return;
+
+        reader.onload = (e) => {
+            try {
+                const result = e.target.result;
+                const name = result.match(/name=[a-z0-9_\-]*/i)[0].split("=")[1];
+                if(!name) {
+                    progbar.style.background = "red";
+                    errortext.innerHTML = "Cannot find name in binary!"
+                    namefield.value = "";
+                    md5field.value = "";
+                    submit.setAttribute("disabled", true);
+                } else {
+                    namefield.value = name;
+                    md5field.value = SparkMD5.hashBinary(result, false);
+                    submit.removeAttribute("disabled");
+                }   
+            } catch {
+                progbar.style.background = "red";
+                submit.setAttribute("disabled", true);
+            }         
+        }
+
+        reader.addEventListener('progress', (e) => {
+            if (e.loaded && e.total) {
+                const percent = (e.loaded / e.total) * 100;
+                progbar.style.width = percent + "%";
+            }
+        });
+
+        reader.readAsBinaryString(file);
+    }
+
+    function sendBinary() {
+        const fd = new FormData();
+        fd.append("binary", upload.files[0]);
+        fd.append("name", namefield.value);
+        fd.append("md5", md5field.value);
+
+        fetch("upload", {method: "POST", body: fd}).then((res) => {
+            switch(res.status) {
+                case 409: 
+                    errortext.innerHTML = "MD5 didn't match! Please try again!";
+                    break;
+                case 200:
+                    upload.value = "";
+                    namefield.value = "";
+                    md5field.value = "";
+                    errortext.innerHTML = "";
+                    submit.setAttribute("disabled", true);
+                    break;
+                default:
+                    errortext.innerHTML = `Unknown error! Please try again! (${res.status})`;
+                    break;
+            }
+        });
+    }
+</script>
+</body>
+</html>
